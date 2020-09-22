@@ -170,7 +170,7 @@ static void dsp_i2s_task_handler(void *arg)
                 }
 
               i2s_write_expand(0, (char*)dsp_audio, chunk_size,16,32, &bytes_written, portMAX_DELAY);
-              
+
             }
             break;
 
@@ -223,6 +223,7 @@ size_t write_ringbuf(const uint8_t *data, size_t size)
 // Interface for cross over and level
 // Additional dynamic bass boost
 //
+
 void dsp_setup_dynbass(double freq, double gain, double quality)
 {  
   float dbf = freq/samplerate; 
@@ -285,7 +286,6 @@ void dsp_set_xoverfreq(uint8_t freqh, uint8_t freql) {
   }
 }
 
-
 void dsp_set_gain(uint8_t gain) {
   float g = gain/4;
   ESP_LOGI("I2C","Gain %.2f",g);
@@ -320,16 +320,20 @@ void dsp_set_dynbass(uint8_t freqh, uint8_t freql, uint8_t gain, uint8_t quality
   float f = freq/samplerate;
   float g = gain/4;  
   float q = quality/64;
-  for ( int8_t n=4; n<=5; n++)
-  { bq[n].freq = f ;
+  for ( int8_t n=4; n<=5; n++){ 
+    
+    bq[n].freq = f ;
     bq[n].gain = g ;
     bq[n].q    = q ; 
 
     switch (bq[n].filtertype) {
       case LOWSHELF:
+
         dsps_biquad_gen_lowShelf_f32( bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q );
         break;
+        
       default : break;
+
     }
   }
 }

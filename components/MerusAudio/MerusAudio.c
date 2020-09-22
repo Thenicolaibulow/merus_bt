@@ -73,7 +73,7 @@ void setup_ma120x0_0x20()
    printf("Hardware version 0x20: 0x%02x\n",res);
 
    ma_write_byte(0x20, 1,  MA_i2s_format__a,8);          // Set i2s standard (8) / Left-just. (9), set audio_proc_enable
-   ma_write_byte(0x20, 1, MA_vol_db_master__a,0x30);    // Set vol_db_master 0x50 - Lavt, 0x30 - Middel, 0x20 - Højt
+   ma_write_byte(0x20, 1, MA_vol_db_master__a,0x25);    // Set vol_db_master 0x50 - Lavt, 0x30 - Middel, 0x20 - Højt
 
    res = ma_read_byte(0x20, 1, MA_error__a); 
    printf("Errors 0x20: 0x%02x\n",res);
@@ -86,11 +86,12 @@ void setup_ma120x0_0x20()
 
 void setup_ma120x0_0x21()
 { 
+
    uint8_t res = ma_read_byte(0x21, 1, MA_hw_version__a);
    printf("Hardware version 0x21: 0x%02x\n",res);
 
    ma_write_byte(0x21, 1, MA_i2s_format__a,8);          // Set i2s standard (8) / Left-just. (9), set audio_proc_enable
-   ma_write_byte(0x21, 1, MA_vol_db_master__a,0x30);    // Set vol_db_master 0x50 - Lavt, 0x30 - Middel, 0x20 - Højt
+   ma_write_byte(0x21, 1, MA_vol_db_master__a,0x25);    // Set vol_db_master 0x50 - Lavt, 0x30 - Middel, 0x20 - Højt
 
    res = ma_read_byte(0x21, 1, MA_error__a); 
    printf("Errors 0x21: 0x%02x\n",res);
@@ -102,6 +103,7 @@ void setup_ma120x0_0x21()
 
    gpio_set_level(MA_NMUTE_IO, 1);
    printf("Unmute\n");
+
 }
 
 void setup_ma120x0()
@@ -115,7 +117,6 @@ void setup_ma120x0()
    io_conf.pull_up_en = 0;
 
    gpio_config(&io_conf);
-
    
    gpio_set_level(MA_NMUTE_IO, 0);
    gpio_set_level(MA_NENABLE_IO, 1);
@@ -147,7 +148,7 @@ void setup_ma120x0()
 }
 
 void i2c_master_init()
-{  printf("*********************************************setup i2c******************\n");
+{  printf("********************************************* Setup i2C ******************\n");
    int i2c_master_port = I2C_MASTER_NUM;
    i2c_config_t conf;
    conf.mode = I2C_MODE_MASTER;
@@ -193,7 +194,8 @@ esp_err_t ma_write( uint8_t i2c_addr,uint8_t prot, uint16_t address, uint8_t *wb
 }
 
 esp_err_t ma_write_byte(uint8_t i2c_addr,uint8_t prot, uint16_t address, uint8_t value)
-{ //printf("%04x %02x\n",address,value);
+{ 
+  printf("%04x %02x\n",address,value);
   esp_err_t ret=0;
   i2c_cmd_handle_t cmd = i2c_cmd_link_create();
   i2c_master_start(cmd);

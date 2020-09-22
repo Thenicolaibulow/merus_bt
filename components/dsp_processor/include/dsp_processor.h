@@ -1,7 +1,7 @@
 #ifndef _DSP_PROCESSOR_H_
 #define _DSP_PROCESSOR_H_
 
-enum dspFlows {dspfStereo, dspfBiamp, dspfDynBass };
+enum dspFlows {dspfStereo, dspfBiamp, dspfDynBass};
 
 size_t write_ringbuf(const uint8_t *data, size_t size);
 

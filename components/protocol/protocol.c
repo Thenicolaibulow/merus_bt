@@ -178,34 +178,57 @@ void protocolHandlerTask(void *pvParameter)
                break;
       case 7 : // DSP
                  switch (*(msg+2)) {
+
                    case 0: // DSP Flow 
                            dspFlow = (int) *(msg+3);
                            ESP_LOGI(TAG, "Dspmode set to :%d",*(msg+3));
+                           // Works nicely.
                            break;
+
                    case 1: // Change Xover frequency
                            dsp_set_xoverfreq(*(msg+3),*(msg+4));
+                           // Not tested.
                            break;
+
                    case 2: // Change dynBass frequency
                            dsp_set_dynbassFreq(*(msg+3),*(msg+4));
+                           printf("L-shelf freqency changed.");
                            break;
+
                    case 3: // Change dynBass gain 
                            dsp_set_gain(*(msg+3));
+                           printf("L-shelf gain changed.");
                            break;
-                   case 5: { uint8_t ch = *(msg+3);
-                             uint8_t state = *(msg+4);
-                             printf("Mute %d %d\n",ch,state);
-                              if ( (ch<=1) & (state<=1) )
-                              { muteCH[ch] = state;
+
+                   case 5: { 
+                            uint8_t ch = *(msg+3);
+                            uint8_t state = *(msg+4);
+                            printf("Mute %d %d\n",ch,state);
+                            
+                            if ( (ch<=1) & (state<=1) ){ 
+                                muteCH[ch] = state;
                               }
                             }
                             break;
+
                    case 6: 
-                           printf("Juhu, H-shelf!");
+                           printf("H-shelf! Freqency! IE: 7, 6, FreqH, FreqL");
+                           // H-shelf freq. func here.
                            break; 
+
+                   case 7: 
+                           printf("H-shelf! Gain! IE: 7, 7, Gain");
+                           // H-shelf gain. func here.
+                           break;                            
+
                    case 10:
-                          ma_write_byte(0x20,1, *(msg+3), *(msg+4));  
-                          ma_write_byte(0x21,1, *(msg+3), *(msg+4));  
-                          printf("Volume changed! : %d\n", *(msg+4));
+                          // Syntax: I2C ADDR, PROT (1), Register ADDR, Value.
+
+                          ma_write_byte(0x20,1, *(msg+3), (0x20 + 127 - *(msg+4)));  
+                          ma_write_byte(0x21,1, *(msg+3), (0x20 + 127 - *(msg+4))); 
+
+                          // Value = (0x20 + 127 - *(msg+4)) Should work for dynamic volume control.
+                          // Currently this straight up doesn't work. For whatever reason. No I2C write errors??
                           break;
 
                    case 100: // Sync UI interface 

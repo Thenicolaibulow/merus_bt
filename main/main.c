@@ -25,7 +25,6 @@
 #include "driver/gpio.h"
 #include "sdkconfig.h"
 
-
 #include "MerusAudio.h"
 #include "ma120x0.h"
 
@@ -54,16 +53,20 @@ void app_main(void)
    
     ma_bt_start();
 
-        PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0_CLK_OUT1);               // MCLK Generator for perephrial-devices IE, DSP
+        PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0_CLK_OUT1);               // MCLK Generator for DSP ~24MHz
         WRITE_PERI_REG(PIN_CTRL, READ_PERI_REG(PIN_CTRL) & 0xFFFFFFF0); 
-        setup_ma120x0_0x20();
+        
+        setup_ma120x0_0x20();                                                       // Init MA on ADDR 0x20 & 0x21.
         setup_ma120x0_0x21();
     
     dsp_i2s_task_init(samplerate);
 
-    dspFlow = dspfStereo; //dspfBiamp;
+    dspFlow = dspfStereo; //dspfBiamp | dspfdynaBass; Stereo & BiAmp is pretty stable, dynBass; not so much..
+
     dsp_setup_flow(200.0);
-    dsp_setup_dynbass(300.0, 0, 0.707);
+    dsp_setup_dynbass(150.0, 0, 0.707); 
+    // Gain set to 0, such that the system doesn't spin out off control straigth away. Adjust it in the APP (Be warned, Ear Rape!!) 
+    // Lack of headroom in the main mix, when adjusted, is the current hypotesis to this behavior.
 
     prot_queue = xQueueCreate(10, sizeof(uint8_t *) );
     xTaskCreatePinnedToCore(protocolHandlerTask, "prot_handler_task", 2*1024, NULL, 5, NULL,0);
