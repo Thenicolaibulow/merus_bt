@@ -224,17 +224,17 @@ size_t write_ringbuf(const uint8_t *data, size_t size)
 // Additional dynamic bass boost
 //
 
-void dsp_setup_dynbass(double freq, double gain, double quality)
-{  
+void dsp_setup_dynbass(double freq, double gain, double quality){  
+  
   float dbf = freq/samplerate; 
   printf("Nomalized frequency : %d %f %.9f \n",samplerate, freq, dbf) ;
   bq[4] = (ptype_t) { LOWSHELF, dbf, gain, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
   bq[5] = (ptype_t) { LOWSHELF, dbf, gain, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
   dsps_biquad_gen_lowShelf_f32(bq[4].coeffs, bq[4].freq, bq[4].gain ,bq[4].q);
   dsps_biquad_gen_lowShelf_f32(bq[5].coeffs, bq[5].freq, bq[5].gain ,bq[5].q);
-  for (uint8_t i = 0;i <=4 ;i++ )
-  {  printf("%.6f ",bq[4].coeffs[i]);
-  }
+  for (uint8_t i = 0;i <=4 ;i++ ){  
+      printf("%.6f ",bq[4].coeffs[i]);
+    }
   printf("\n");
 }
 
@@ -270,15 +270,17 @@ void dsp_setup_flow(double freq) {
       }
 
     printf("\n");
- }
+    }
+  }
 }
 
 void dsp_set_xoverfreq(uint8_t freqh, uint8_t freql) {
   float freq =  (freqh*256 + freql)/4;
   ESP_LOGI("X-filter","Freq %.0f",freq);
   float f = freq/samplerate;
-  for ( int8_t n=0; n<=5; n++)
-  { bq[n].freq = f ;
+
+  for ( int8_t n=0; n<=5; n++){ 
+    bq[n].freq = f ;
     switch (bq[n].filtertype) {
       case LPF:
         dsps_biquad_gen_lpf_f32( bq[n].coeffs, bq[n].freq, bq[n].q );
@@ -379,14 +381,14 @@ void dsp_set_hshelfFreq(uint8_t freqh, uint8_t freql) {
 
 }
 
-void dsp_set_hshelf(uint8_t freq, uint8_t gain, uint8_t q_filter){
+void dsp_setup_hshelf(double freq, double gain, double q_filter){
+
+  float f = freq/44100;                   // Filter frequency 'normalized to sample rate'
+  float g = gain/4; 
+  float q = q_filter/64;
 
   bq[4] = (ptype_t) { HIGHSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ; // Register Filter Biquads
   bq[5] = (ptype_t) { HIGHSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
-
-  float f = freq/48000.0/2.0;                   // Filter frequency 'normalized to sample rate'
-  float g = gain/4; 
-  float q = q_filter/64;
 
   for(int8_t n=0; n<=5; n++){                   // Generate biquad coefficients
 
@@ -406,11 +408,10 @@ void dsp_set_hshelf(uint8_t freq, uint8_t gain, uint8_t q_filter){
     for (uint8_t i = 0;i <=3 ;i++ ){  
 
       printf("%.4f",bq[n].coeffs[i]);
-      }
+    }
    
     // ^Prints the calculated coefficients for each filter. 
     // Careful with changing the freq and gain too much. It'll clutter the bluetooth connection.      
 
-    }
   }
 }

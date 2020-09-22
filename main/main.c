@@ -65,8 +65,8 @@ void app_main(void)
     
                                             // ^ Set default dspflow to stereo.
     dsp_setup_flow(200.0);                  // Init crossover filters for biAmp dspflow.
+    dsp_setup_hshelf(150.0, 0, 0.707);      // Init highshelf filter.
     dsp_setup_dynbass(150.0, 0, 0.707);     // Init lowshelf filter.
-    dsp_set_hshelf(150.0, 0, 0.707);        // Init highshelf filter.
 
     // Gain set to 0, such that the system doesn't spin out off control straigth away. Adjust it in the APP (Be warned, Ear Rape!!) 
     // Lack of headroom in the main mix, when adjusted, is the current hypotesis to this behavior.
