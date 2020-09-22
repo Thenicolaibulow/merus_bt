@@ -1,5 +1,6 @@
 # Bluetooth audio streaming with Infineon MA12070P multilevel classD audio amplifier
 ##
+
 This design shows how easy a full featured Bluetooth audio streaming application can be build 
 using the ESP32 and a multilevel classD amp. 
 
@@ -56,4 +57,6 @@ The repo is setup with the following pin configs - but can be changed using make
 
 ### SPP app control 
 
+Currently the L-Shelf seems to be functional! - However it spins out of control when the frequency is changed. 
+Solong only the gain is changed it works. Although stuck a 150Hz. For now. 
 
