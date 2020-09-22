@@ -53,14 +53,17 @@ void app_main(void)
     }
    
     ma_bt_start();
-    
-    setup_ma120x0(); 
+
+        PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0_CLK_OUT1);               // MCLK Generator for perephrial-devices IE, DSP
+        WRITE_PERI_REG(PIN_CTRL, READ_PERI_REG(PIN_CTRL) & 0xFFFFFFF0); 
+        setup_ma120x0_0x20();
+        setup_ma120x0_0x21();
     
     dsp_i2s_task_init(samplerate);
 
-    dspFlow = dspfDynBass; //dspfBiamp;
+    dspFlow = dspfStereo; //dspfBiamp;
     dsp_setup_flow(200.0);
-    dsp_setup_dynbass(300.0, 6, 0.707);
+    dsp_setup_dynbass(300.0, 0, 0.707);
 
     prot_queue = xQueueCreate(10, sizeof(uint8_t *) );
     xTaskCreatePinnedToCore(protocolHandlerTask, "prot_handler_task", 2*1024, NULL, 5, NULL,0);

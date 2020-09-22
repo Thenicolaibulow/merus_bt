@@ -180,12 +180,13 @@ void protocolHandlerTask(void *pvParameter)
                  switch (*(msg+2)) {
                    case 0: // DSP Flow 
                            dspFlow = (int) *(msg+3);
+                           ESP_LOGI(TAG, "Dspmode set to :%d",*(msg+3));
                            break;
                    case 1: // Change Xover frequency
                            dsp_set_xoverfreq(*(msg+3),*(msg+4));
                            break;
                    case 2: // Change dynBass frequency
-                           dsp_set_dynbassfreq(*(msg+3),*(msg+4));
+                           dsp_set_dynbassFreq(*(msg+3),*(msg+4));
                            break;
                    case 3: // Change dynBass gain 
                            dsp_set_gain(*(msg+3));
@@ -198,6 +199,15 @@ void protocolHandlerTask(void *pvParameter)
                               }
                             }
                             break;
+                   case 6: 
+                           printf("Juhu, H-shelf!");
+                           break; 
+                   case 10:
+                          ma_write_byte(0x20,1, *(msg+3), *(msg+4));  
+                          ma_write_byte(0x21,1, *(msg+3), *(msg+4));  
+                          printf("Volume changed! : %d\n", *(msg+4));
+                          break;
+
                    case 100: // Sync UI interface 
                             {
                               uint8_t UI_sync_vector[15];

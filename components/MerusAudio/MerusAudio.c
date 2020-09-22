@@ -50,6 +50,59 @@ static const char* I2C_TAG = "i2c";
 #define ACK_VAL    0x0         /*!< I2C ack value */
 #define NACK_VAL   0x1         /*!< I2C nack value */
 
+void setup_ma120x0_0x20()
+{  // Setup control pins nEnable and nMute
+   gpio_config_t io_conf;
+
+   io_conf.intr_type = GPIO_PIN_INTR_DISABLE;
+   io_conf.mode = GPIO_MODE_OUTPUT;
+   io_conf.pin_bit_mask = (1ULL<<MA_NENABLE_IO | 1ULL<<MA_NMUTE_IO);
+   io_conf.pull_down_en = 0;
+   io_conf.pull_up_en = 0;
+
+   gpio_config(&io_conf);
+    
+   gpio_set_level(MA_NMUTE_IO, 0);
+   gpio_set_level(MA_NENABLE_IO, 1);
+
+   i2c_master_init();
+    
+   gpio_set_level(MA_NENABLE_IO, 0);
+	  
+   uint8_t res = ma_read_byte(0x20, 1, MA_hw_version__a);
+   printf("Hardware version 0x20: 0x%02x\n",res);
+
+   ma_write_byte(0x20, 1,  MA_i2s_format__a,8);          // Set i2s standard (8) / Left-just. (9), set audio_proc_enable
+   ma_write_byte(0x20, 1, MA_vol_db_master__a,0x30);    // Set vol_db_master 0x50 - Lavt, 0x30 - Middel, 0x20 - Højt
+
+   res = ma_read_byte(0x20, 1, MA_error__a); 
+   printf("Errors 0x20: 0x%02x\n",res);
+
+   printf("Clear errors\n");
+   ma_write_byte(0x20, 1, 45, 0x34);
+   ma_write_byte(0x20, 1, 45, 0x30);
+   printf("MA120x0P init done 0x20\n");
+}
+
+void setup_ma120x0_0x21()
+{ 
+   uint8_t res = ma_read_byte(0x21, 1, MA_hw_version__a);
+   printf("Hardware version 0x21: 0x%02x\n",res);
+
+   ma_write_byte(0x21, 1, MA_i2s_format__a,8);          // Set i2s standard (8) / Left-just. (9), set audio_proc_enable
+   ma_write_byte(0x21, 1, MA_vol_db_master__a,0x30);    // Set vol_db_master 0x50 - Lavt, 0x30 - Middel, 0x20 - Højt
+
+   res = ma_read_byte(0x21, 1, MA_error__a); 
+   printf("Errors 0x21: 0x%02x\n",res);
+
+   printf("Clear errors\n");
+   ma_write_byte(0x21, 1, 45, 0x34);
+   ma_write_byte(0x21, 1, 45, 0x30);
+   printf("MA120x0P init done 0x21\n");
+
+   gpio_set_level(MA_NMUTE_IO, 1);
+   printf("Unmute\n");
+}
 
 void setup_ma120x0()
 {  // Setup control pins nEnable and nMute

@@ -107,7 +107,8 @@ static void dsp_i2s_task_handler(void *arg)
 
         switch (dspFlow) {
           case dspfStereo :
-            { for (uint16_t i=0; i<len; i++)
+            { 
+              for (uint16_t i=0; i<len; i++)
               { audio[i*4+0] = (muteCH[0] == 1)? 0 : audio[i*4+0];
                 audio[i*4+1] = (muteCH[0] == 1)? 0 : audio[i*4+1];
                 audio[i*4+2] = (muteCH[1] == 1)? 0 : audio[i*4+2];
@@ -116,30 +117,38 @@ static void dsp_i2s_task_handler(void *arg)
               i2s_write_expand(0, (char*)audio, chunk_size,16,32, &bytes_written, portMAX_DELAY);
             }
             break;
+
           case dspfDynBass : 
-            { // Process Audio ch0 LOW SHELF FILTER 
-                dsps_biquad_f32_ae32(sbuffer0, sbufout0, len, bq[4].coeffs, bq[4].w); 
-              // Process Audio ch1 LOW SHELF FILTER   
-                dsps_biquad_f32_ae32(sbuffer1, sbufout1, len, bq[5].coeffs, bq[5].w); 
-            }  
-            int16_t valint[2];
-            for (uint16_t i=0; i<len; i++)
             { 
-              chmaxpost[0] = (sbufout0[i]>chmax[0])?sbufout0[i]:chmaxpost[0];
-              chmaxpost[1] = (sbufout1[i]>chmax[1])?sbufout1[i]:chmaxpost[1];
-     
-              valint[0] = (muteCH[0] == 1) ? (int16_t) 0 : (int16_t) (sbufout0[i]*32768);
-              valint[1] = (muteCH[1] == 1) ? (int16_t) 0 : (int16_t) (sbufout1[i]*32768);
-              dsp_audio[i*4+0] = (valint[0] & 0xff);
-              dsp_audio[i*4+1] = ((valint[0] & 0xff00)>>8);
-              dsp_audio[i*4+2] = (valint[1] & 0xff);
-              dsp_audio[i*4+3] = ((valint[1] & 0xff00)>>8);
-            }
+                // Process Audio ch0 LOW SHELF FILTER 
+                dsps_biquad_f32_ae32(sbuffer0, sbufout0, len, bq[4].coeffs, bq[4].w); 
+                // Process Audio ch1 LOW SHELF FILTER   
+                dsps_biquad_f32_ae32(sbuffer1, sbufout1, len, bq[5].coeffs, bq[5].w); 
+
+                int16_t valint[2];
+
+                  for (uint16_t i=0; i<len; i++){ 
+
+                    chmaxpost[0] = (sbufout0[i]>chmax[0])?sbufout0[i]:chmaxpost[0];
+                    chmaxpost[1] = (sbufout1[i]>chmax[1])?sbufout1[i]:chmaxpost[1];
+          
+                    valint[0] = (muteCH[0] == 1) ? (int16_t) 0 : (int16_t) (sbufout0[i]*32768);
+                    valint[1] = (muteCH[1] == 1) ? (int16_t) 0 : (int16_t) (sbufout1[i]*32768);
+                    dsp_audio[i*4+0] = (valint[0] & 0xff);
+                    dsp_audio[i*4+1] = ((valint[0] & 0xff00)>>8);
+                    dsp_audio[i*4+2] = (valint[1] & 0xff);
+                    dsp_audio[i*4+3] = ((valint[1] & 0xff00)>>8);
+
+                }
+
             i2s_write_expand(0, (char*)dsp_audio, chunk_size,16,32, &bytes_written, portMAX_DELAY);
-            
+
+            }
             break;
+
           case dspfBiamp :
-            { // Process audio ch0 LOW PASS FILTER
+            { 
+              // Process audio ch0 LOW PASS FILTER
               dsps_biquad_f32_ae32(sbuffer0, sbuftmp0, len, bq[0].coeffs, bq[0].w);
               dsps_biquad_f32_ae32(sbuftmp0, sbufout0, len, bq[1].coeffs, bq[1].w);
 
@@ -148,15 +157,20 @@ static void dsp_i2s_task_handler(void *arg)
               dsps_biquad_f32_ae32(sbuftmp0, sbufout1, len, bq[3].coeffs, bq[3].w);
 
               int16_t valint[2];
-              for (uint16_t i=0; i<len; i++)
-              { valint[0] = (muteCH[0] == 1) ? (int16_t) 0 : (int16_t) (sbufout0[i]*32768);
-                valint[1] = (muteCH[1] == 1) ? (int16_t) 0 : (int16_t) (sbufout1[i]*32768);
-                dsp_audio[i*4+0] = (valint[0] & 0xff);
-                dsp_audio[i*4+1] = ((valint[0] & 0xff00)>>8);
-                dsp_audio[i*4+2] = (valint[1] & 0xff);
-                dsp_audio[i*4+3] = ((valint[1] & 0xff00)>>8);
-              }
+
+                for (uint16_t i=0; i<len; i++){ 
+
+                  valint[0] = (muteCH[0] == 1) ? (int16_t) 0 : (int16_t) (sbufout0[i]*32768);
+                  valint[1] = (muteCH[1] == 1) ? (int16_t) 0 : (int16_t) (sbufout1[i]*32768);
+                  dsp_audio[i*4+0] = (valint[0] & 0xff);
+                  dsp_audio[i*4+1] = ((valint[0] & 0xff00)>>8);
+                  dsp_audio[i*4+2] = (valint[1] & 0xff);
+                  dsp_audio[i*4+3] = ((valint[1] & 0xff00)>>8);
+
+                }
+
               i2s_write_expand(0, (char*)dsp_audio, chunk_size,16,32, &bytes_written, portMAX_DELAY);
+              
             }
             break;
 
@@ -285,6 +299,7 @@ void dsp_set_gain(uint8_t gain) {
     }
   }
 }
+
 void dsp_set_dynbassFreq(uint8_t freqh, uint8_t freql) {
   float freq = (freqh*256 + freql)/4;
   ESP_LOGI("I2C","Freq %.2f",freq);

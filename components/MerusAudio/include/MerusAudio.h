@@ -6,6 +6,9 @@ void setup_ma120(void);
 void ma120_read_error(uint8_t i2c_addr);
 void ma120_setup_audio(uint8_t i2c_addr);
 
+void setup_ma120x0_0x20(void);
+void setup_ma120x0_0x21(void);
+
 void i2c_master_init(void);
 
 esp_err_t ma_write_byte(uint8_t i2c_addr, uint8_t prot, uint16_t address, uint8_t value); 
