@@ -225,12 +225,8 @@ void protocolHandlerTask(void *pvParameter)
 
                    case 10:
                           // Syntax: I2C ADDR, PROT (1), Register ADDR, Value.
-
-                          ma_write_byte(0x20,1, *(msg+3), (0x20 + 127 - *(msg+4)));  
-                          ma_write_byte(0x21,1, *(msg+3), (0x20 + 127 - *(msg+4))); 
-
-                          // Value = (0x20 + 127 - *(msg+4)) Should work for dynamic volume control.
-                          // Currently this straight up doesn't work. For whatever reason. No I2C write errors??
+                          ma_write_byte(0x20,1, *(msg+3), ((0x20 + 127) + *(msg+4)));  
+                          ma_write_byte(0x21,1, *(msg+3), ((0x20 + 127) + *(msg+4))); 
                           break;
 
                    case 100: // Sync UI interface 

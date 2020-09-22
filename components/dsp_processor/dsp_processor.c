@@ -239,22 +239,20 @@ void dsp_setup_dynbass(double freq, double gain, double quality)
 }
 
 void dsp_setup_flow(double freq) {
+
   float f = freq/samplerate;
   bq[0] = (ptype_t) { LPF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
   bq[1] = (ptype_t) { LPF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
   bq[2] = (ptype_t) { HPF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
   bq[3] = (ptype_t) { HPF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
-  bq[4] = (ptype_t) { HIGHSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
-  bq[5] = (ptype_t) { HIGHSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
 
   pnode_t * aflow = NULL;
   aflow = malloc(sizeof(pnode_t));
-  if (aflow == NULL)
-  { printf("Could not create node");
-  }
-
-  for (uint8_t n=0; n<=5; n++)
-  { switch (bq[n].filtertype) {
+  if (aflow == NULL){ printf("Could not create node");
+  
+  for (uint8_t n=0; n<=5; n++){ 
+    
+    switch (bq[n].filtertype) {
       case LPF: dsps_biquad_gen_lpf_f32( bq[n].coeffs, bq[n].freq, bq[n].q );
               break;
       case HPF: dsps_biquad_gen_hpf_f32( bq[n].coeffs, bq[n].freq, bq[n].q );
@@ -266,16 +264,18 @@ void dsp_setup_flow(double freq) {
 
       default : break;
     }
-    for (uint8_t i = 0;i <=4 ;i++ )
-    {  printf("%.6f ",bq[n].coeffs[i]);
-    }
+
+      for (uint8_t i = 0;i <=4 ;i++ ){  
+        printf("%.6f ",bq[n].coeffs[i]);
+      }
+
     printf("\n");
  }
 }
 
 void dsp_set_xoverfreq(uint8_t freqh, uint8_t freql) {
   float freq =  (freqh*256 + freql)/4;
-  ESP_LOGI("I2C","Freq %.0f",freq);
+  ESP_LOGI("X-filter","Freq %.0f",freq);
   float f = freq/samplerate;
   for ( int8_t n=0; n<=5; n++)
   { bq[n].freq = f ;
@@ -293,7 +293,7 @@ void dsp_set_xoverfreq(uint8_t freqh, uint8_t freql) {
 
 void dsp_set_gain_lshelf(uint8_t gain) {
   float g = gain/4;
-  ESP_LOGI("I2C","Gain %.2f",g);
+  ESP_LOGI("L-Shelf","Gain %.2f",g);
   for ( int8_t n=4; n<=5; n++)
   { bq[n].gain = g;
     switch (bq[n].filtertype) {
@@ -307,7 +307,7 @@ void dsp_set_gain_lshelf(uint8_t gain) {
 
 void dsp_set_dynbassFreq(uint8_t freqh, uint8_t freql) {
   float freq = (freqh*256 + freql)/4;
-  ESP_LOGI("I2C","Freq %.2f",freq);
+  ESP_LOGI("L-Shelf","Freq %.2f",freq);
   for ( int8_t n=4; n<=5; n++)
   { bq[n].freq = freq;
     switch (bq[n].filtertype) {
@@ -321,7 +321,7 @@ void dsp_set_dynbassFreq(uint8_t freqh, uint8_t freql) {
 
 void dsp_set_dynbass(uint8_t freqh, uint8_t freql, uint8_t gain, uint8_t quality) {
   float freq =  (freqh*256 + freql)/4;
-  ESP_LOGI("I2C","Freq %.0f",freq);
+  ESP_LOGI("L-Shelf","Freq %.0f",freq);
   float f = freq/samplerate;
   float g = gain/4;  
   float q = quality/64;
@@ -345,49 +345,56 @@ void dsp_set_dynbass(uint8_t freqh, uint8_t freql, uint8_t gain, uint8_t quality
 
 void dsp_set_gain_hshelf(uint8_t gain) {
   float g = gain/4;
-  ESP_LOGI("I2C","Gain %.2f",g);
-  for ( int8_t n=4; n<=5; n++)
-  { bq[n].gain = g;
-    switch (bq[n].filtertype) {
-      case HIGHSHELF:
-        dsps_biquad_gen_highShelf_f32( bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q );
-        break;
-      default : break;
+  ESP_LOGI("H-Shelf","Gain %.2f",g);
+
+    for ( int8_t n=4; n<=5; n++){ 
+      bq[n].gain = g;
+      switch (bq[n].filtertype) {
+
+        case HIGHSHELF:
+          dsps_biquad_gen_highShelf_f32( bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q );
+          break;
+        default : break;
+
+      }
     }
-  }
 }
 
 void dsp_set_hshelfFreq(uint8_t freqh, uint8_t freql) {
+
   float freq = (freqh*256 + freql)/4;
-  ESP_LOGI("I2C","Freq %.2f",freq);
-  for ( int8_t n=4; n<=5; n++)
-  { bq[n].freq = freq;
-    switch (bq[n].filtertype) {
-      case HIGHSHELF:
-        dsps_biquad_gen_highShelf_f32( bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q );
-        break;
-      default : break;
+  ESP_LOGI("H-Shelf","Freq %.2f",freq);
+
+    for ( int8_t n=4; n<=5; n++){ 
+      bq[n].freq = freq;
+      switch (bq[n].filtertype) {
+
+        case HIGHSHELF:
+          dsps_biquad_gen_highShelf_f32( bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q );
+          break;
+        default : break;
+
+      }
     }
-  }
+
 }
 
 void dsp_set_hshelf(uint8_t freq, uint8_t gain, uint8_t q_filter){
 
-  printf("Highshelfing..@ %d\n", freq);
+  bq[4] = (ptype_t) { HIGHSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ; // Register Filter Biquads
+  bq[5] = (ptype_t) { HIGHSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
 
-  // ESP_LOGI("I2C","Frequency for notch filter: %.0d", freq, "  Gain: %.0d", gain);
-
-  float f = freq/48000.0/2.0; // Filter frequency 'normalized to sample rate'
+  float f = freq/48000.0/2.0;                   // Filter frequency 'normalized to sample rate'
   float g = gain/4; 
   float q = q_filter/64;
 
-  for(int8_t n=0; n<=5; n++){ 
+  for(int8_t n=0; n<=5; n++){                   // Generate biquad coefficients
 
     bq[n].freq = f;
-    bq[n].gain = g; // Temporarily fixed value. 
+    bq[n].gain = g;
     bq[n].q = q;
 
-    switch (bq[n].filtertype) {
+    switch (bq[n].filtertype) {                 
       case HIGHSHELF:
 
         dsps_biquad_gen_highShelf_f32(bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q);
@@ -401,13 +408,9 @@ void dsp_set_hshelf(uint8_t freq, uint8_t gain, uint8_t q_filter){
       printf("%.4f",bq[n].coeffs[i]);
       }
    
-    printf("\n");
-    printf("Freq: %.4f", f);  
-    printf("Gain: %.4f", g);  
-    printf("\n");
-
     // ^Prints the calculated coefficients for each filter. 
     // Careful with changing the freq and gain too much. It'll clutter the bluetooth connection.      
 
     }
+  }
 }

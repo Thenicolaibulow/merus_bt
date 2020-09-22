@@ -39,4 +39,5 @@ void dsp_set_dynbass(uint8_t, uint8_t, uint8_t, uint8_t);
 void dsp_set_dynbassFreq(uint8_t, uint8_t);
 void dsp_set_hshelfFreq(uint8_t, uint8_t);
 void dsp_set_hshelf(uint8_t, uint8_t, uint8_t);
+
 #endif /* _DSP_PROCESSOR_H_  */

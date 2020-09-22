@@ -70,6 +70,7 @@ void app_main(void)
 
     // Gain set to 0, such that the system doesn't spin out off control straigth away. Adjust it in the APP (Be warned, Ear Rape!!) 
     // Lack of headroom in the main mix, when adjusted, is the current hypotesis to this behavior.
+    // Also, these calls should be moved to dsp_processor/*new func*: Init DSP FLow
 
     prot_queue = xQueueCreate(10, sizeof(uint8_t *) );
     xTaskCreatePinnedToCore(protocolHandlerTask, "prot_handler_task", 2*1024, NULL, 5, NULL,0);
