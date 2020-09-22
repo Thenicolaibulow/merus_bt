@@ -196,7 +196,7 @@ void protocolHandlerTask(void *pvParameter)
                            break;
 
                    case 3: // Change dynBass gain 
-                           dsp_set_gain(*(msg+3));
+                           dsp_set_gain_lshelf(*(msg+3));
                            printf("L-shelf gain changed.");
                            break;
 
@@ -212,12 +212,14 @@ void protocolHandlerTask(void *pvParameter)
                             break;
 
                    case 6: 
-                           printf("H-shelf! Freqency! IE: 7, 6, FreqH, FreqL");
+                           printf("H-shelf frequency changed.");
+                           dsp_set_hshelfFreq(*(msg+3),*(msg+4));
                            // H-shelf freq. func here.
                            break; 
 
                    case 7: 
-                           printf("H-shelf! Gain! IE: 7, 7, Gain");
+                           printf("H-shelf gain changed.");
+                           dsp_set_gain_hshelf(*(msg+3));
                            // H-shelf gain. func here.
                            break;                            
 
