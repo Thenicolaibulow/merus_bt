@@ -57,6 +57,6 @@ The repo is setup with the following pin configs - but can be changed using make
 
 ### SPP app control 
 
-Currently the L-Shelf seems to be functional! - However it spins out of control when the frequency is changed. 
-Solong only the gain is changed it works. Although stuck a 150Hz. For now. 
+Currently the L-Shelf & H-shelf is functional! - However it spins out of control when the frequency is changed. 
+Which is why the L & H-shelf is currently locked at 150Hz & 3KHz respectively.  
 
