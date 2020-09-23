@@ -1,7 +1,7 @@
 #ifndef _DSP_PROCESSOR_H_
 #define _DSP_PROCESSOR_H_
 
-enum dspFlows {dspfStereo, dspfBiamp, dspfDynBass};
+enum dspFlows {dspfStereo, dspfBiamp, dspfFilters};
 
 size_t write_ringbuf(const uint8_t *data, size_t size);
 
@@ -42,4 +42,5 @@ void dsp_setup_hshelf(double freq,double gain, double q_filter);
 void dsp_set_filter_gain(double gain, uint8_t filterType);
 void dsp_setup_filter(double freq, double gain, double q_filter, uint8_t filterType);
 void dsp_set_filter_freq(double freq, uint8_t filterType);
+void dsp_init_filter(uint8_t filterType, double freq);
 #endif /* _DSP_PROCESSOR_H_  */

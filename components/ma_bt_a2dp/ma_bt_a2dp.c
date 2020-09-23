@@ -321,7 +321,7 @@ static void bt_av_hdl_stack_evt(uint16_t event, void *p_param)
     switch (event){
         case BT_APP_EVT_STACK_UP:{
             /* set up device name */
-            char *dev_name = "MOUSAI @ Pilou";
+            char *dev_name = "MOUSAI @ Marius V2";
             esp_bt_dev_set_device_name(dev_name);
 
             esp_bt_gap_register_callback(bt_app_gap_cb);

@@ -196,15 +196,34 @@ void protocolHandlerTask(void *pvParameter)
                            // Not tested.
                            break;
 
-                   case 2: // Change dynBass frequency
-                           dsp_set_dynbassFreq(*(msg+3),*(msg+4));
+                   case 2: // Change dynBass frequency. 
+                        
+                        // This can't really be used rigth now, as we'll have to figure out a way to parse
+                        // freqh, freql, and filterType, in one spp-package.
+
+                           // dsp_set_dynbassFreq(*(msg+3),*(msg+4));
                            printf("L-shelf freqency changed.");
                            break;
 
-                   case 3: // Change dynBass gain 
-                           dsp_set_gain_lshelf(*(msg+3));
-                           printf("L-shelf gain changed.");
-                           break;
+                   case 3: // Change filter gain
+                           dsp_set_filter_gain(*(msg+3), *(msg+4)); // gain, filtertype. SPP package should then be: 7, 3, gain, 0-3 (filtertype)
+                                switch(*(msg+4)){
+                                        case 0: 
+                                                printf("L-shelf gain changed.");
+                                                break;
+                                        case 1: 
+                                                printf("H-shelf gain changed.");
+                                                break;
+                                        case 2:
+                                                printf("Peaking gain changed.");
+                                                break;   
+                                        case 3: 
+                                                printf("Notch gain changed.");
+                                                break;  
+
+                                        default : break;
+                                        }
+                                break;
 
                    case 5: { 
                             uint8_t ch = *(msg+3);
@@ -216,18 +235,6 @@ void protocolHandlerTask(void *pvParameter)
                               }
                             }
                             break;
-
-                   case 6: 
-                           printf("H-shelf frequency changed.");
-                           dsp_set_hshelfFreq(*(msg+3),*(msg+4));
-                           
-                           break; 
-
-                   case 7: 
-                           printf("H-shelf gain changed.");
-                           dsp_set_gain_hshelf(*(msg+3));
-                           
-                           break;                            
 
                    case 10:
                           // Syntax: I2C ADDR, PROT (1), Register ADDR, Value.

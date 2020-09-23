@@ -63,10 +63,17 @@ static void dsp_i2s_task_handler(void *arg)
   float sbuffer0[1024];
   float sbuffer1[1024];
   float sbuffer2[1024];
+  float sbuffer3[1024];
+  float sbuffer4[1024];
+  // float sbuffer5[1024]; Seems to be causeing memory overflow!
+  // float sbuffer6[1024];
+  // float sbuffer7[1024];
+  // float sbuffer8[1024];
   float sbufout0[1024];
   float sbufout1[1024];
   float sbufout2[1024];
   float sbuftmp0[1024];
+
   float chmax[2] = {0}; 
   float chmaxpost[2] = {0}; 
   
@@ -96,10 +103,14 @@ static void dsp_i2s_task_handler(void *arg)
         { 
           sbuffer0[i] = ((float) ((int16_t) (audio[i*4+1]<<8) + audio[i*4+0]))/32768;
           sbuffer1[i] = ((float) ((int16_t) (audio[i*4+3]<<8) + audio[i*4+2]))/32768;
-          if (dspFlow == dspfDynBass)
-          { sbuffer0[i] = prescale0 * sbuffer0[i];
+          if (dspFlow == dspfFilters)
+          { sbuffer0[i] = prescale0 * sbuffer0[i];              // I assume that this causes a lower overall volume, thus adding headspace for filters.
             sbuffer1[i] = prescale1 * sbuffer1[i];
+            sbuffer2[i] = prescale1 * sbuffer2[i];
+            sbuffer3[i] = prescale1 * sbuffer3[i];
+            sbuffer4[i] = prescale1 * sbuffer4[i];
           } 
+
           sbuffer2[i] = ((sbuffer0[i]/2) +  (sbuffer1[i]/2));
           chmax[0] = (sbuffer0[i]>chmax[0])?sbuffer0[i]:chmax[0];
           chmax[1] = (sbuffer1[i]>chmax[1])?sbuffer1[i]:chmax[1];
@@ -118,13 +129,25 @@ static void dsp_i2s_task_handler(void *arg)
             }
             break;
 
-          case dspfDynBass : 
+          case dspfFilters : 
             { 
-                // Process Audio ch0 LOW SHELF FILTER 
-                dsps_biquad_f32_ae32(sbuffer0, sbufout0, len, bq[4].coeffs, bq[4].w); 
-                // Process Audio ch1 LOW SHELF FILTER   
-                dsps_biquad_f32_ae32(sbuffer1, sbufout1, len, bq[5].coeffs, bq[5].w); 
 
+                // Create filter pipeline.
+                // Sbuffer2 isn't used, as it's reserved for biamp operation, which is downmixed to mono. : sbuffer2[i] = ((sbuffer0[i]/2) +  (sbuffer1[i]/2));
+
+                dsps_biquad_f32_ae32(sbuffer0, sbuffer3, len, bq[0].coeffs, bq[0].w); 
+                dsps_biquad_f32_ae32(sbuffer1, sbuffer4, len, bq[1].coeffs, bq[1].w); 
+                dsps_biquad_f32_ae32(sbuffer3, sbufout0, len, bq[2].coeffs, bq[2].w);   
+                dsps_biquad_f32_ae32(sbuffer4, sbufout1, len, bq[3].coeffs, bq[3].w);                 
+
+                // dsps_biquad_f32_ae32(sbuffer5, sbuffer7, len, bq[4].coeffs, bq[4].w);  // Causes memory overflow. It seems we need to be able to reuse the sbuffer's
+                // dsps_biquad_f32_ae32(sbuffer6, sbuffer8, len, bq[5].coeffs, bq[5].w);  throughout the biquad pipes..
+                // dsps_biquad_f32_ae32(sbuffer7, sbufout0, len, bq[6].coeffs, bq[6].w); 
+                // dsps_biquad_f32_ae32(sbuffer8, sbufout1, len, bq[7].coeffs, bq[7].w); 
+
+                // Pipeline: L-shelf [bq[0-1]] -> H-shelf [bq[2-3]] -> Peaking [bq[4-5]] -> Notch [bq[6-7]]
+                // Even though some biquads might not have any effect (gain), this pipeline should allow us to test each biquad.
+                
                 int16_t valint[2];
 
                   for (uint16_t i=0; i<len; i++){ 
@@ -132,16 +155,16 @@ static void dsp_i2s_task_handler(void *arg)
                     chmaxpost[0] = (sbufout0[i]>chmax[0])?sbufout0[i]:chmaxpost[0];
                     chmaxpost[1] = (sbufout1[i]>chmax[1])?sbufout1[i]:chmaxpost[1];
           
-                    valint[0] = (muteCH[0] == 1) ? (int16_t) 0 : (int16_t) (sbufout0[i]*32768);
+                    valint[0] = (muteCH[0] == 1) ? (int16_t) 0 : (int16_t) (sbufout0[i]*32768);     // JKJ's 16 -> 32 bit magic.
                     valint[1] = (muteCH[1] == 1) ? (int16_t) 0 : (int16_t) (sbufout1[i]*32768);
-                    dsp_audio[i*4+0] = (valint[0] & 0xff);
+                    dsp_audio[i*4+0] = (valint[0] & 0xff);                                          // Populates I2S buffer with filtermodified data.
                     dsp_audio[i*4+1] = ((valint[0] & 0xff00)>>8);
                     dsp_audio[i*4+2] = (valint[1] & 0xff);
                     dsp_audio[i*4+3] = ((valint[1] & 0xff00)>>8);
 
                 }
 
-            i2s_write_expand(0, (char*)dsp_audio, chunk_size,16,32, &bytes_written, portMAX_DELAY);
+            i2s_write_expand(0, (char*)dsp_audio, chunk_size,16,32, &bytes_written, portMAX_DELAY); // Writes the modified I2S Buffer.
 
             }
             break;
@@ -173,7 +196,7 @@ static void dsp_i2s_task_handler(void *arg)
 
             }
             break;
-
+          // Add filter test dsp_flow which bindes all the potential filters. bq[0-7]
           default :
             break;
         }
@@ -223,23 +246,6 @@ size_t write_ringbuf(const uint8_t *data, size_t size)
 // Interface for cross over and level
 // Additional dynamic bass boost
 //
-
-void dsp_setup_dynbass(double freq, double gain, double quality){  
-  
-  float dbf = freq/samplerate; 
-  printf("Nomalized frequency : %d %f %.9f \n",samplerate, freq, dbf) ;
-
-  bq[4] = (ptype_t) { LOWSHELF, dbf, gain, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ; // Register biquads.
-  bq[5] = (ptype_t) { LOWSHELF, dbf, gain, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
-
-  dsps_biquad_gen_lowShelf_f32(bq[4].coeffs, bq[4].freq, bq[4].gain ,bq[4].q);        // Generate coefficients.
-  dsps_biquad_gen_lowShelf_f32(bq[5].coeffs, bq[5].freq, bq[5].gain ,bq[5].q);
-
-  for (uint8_t i = 0;i <=4 ;i++ ){          // Print coefficients.
-      printf("%.6f ",bq[4].coeffs[i]);
-    }
-  printf("\n");
-}
 
 void dsp_setup_flow(double freq) { // Should really be called "Setup x-filter.."
 
@@ -294,129 +300,6 @@ void dsp_set_xoverfreq(uint8_t freqh, uint8_t freql) {
         break;
       default : break;
     }
-  }
-}
-
-void dsp_set_gain_lshelf(uint8_t gain) {
-  float g = gain/4;
-  ESP_LOGI("L-Shelf","Gain %.2f",g);
-  for ( int8_t n=4; n<=5; n++)
-  { bq[n].gain = g;
-    switch (bq[n].filtertype) {
-      case LOWSHELF:
-        dsps_biquad_gen_lowShelf_f32( bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q );
-        break;
-      default : break;
-    }
-  }
-}
-
-void dsp_set_dynbassFreq(uint8_t freqh, uint8_t freql) {
-  float freq = (freqh*256 + freql)/4;
-  ESP_LOGI("L-Shelf","Freq %.2f",freq);
-  for ( int8_t n=4; n<=5; n++)
-  { bq[n].freq = freq;
-    switch (bq[n].filtertype) {
-      case LOWSHELF:
-        dsps_biquad_gen_lowShelf_f32( bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q );
-        break;
-      default : break;
-    }
-  }
-}
-
-void dsp_set_dynbass(uint8_t freqh, uint8_t freql, uint8_t gain, uint8_t quality) {
-  float freq =  (freqh*256 + freql)/4;
-  ESP_LOGI("L-Shelf","Freq %.0f",freq);
-  float f = freq/samplerate;
-  float g = gain/4;  
-  float q = quality/64;
-  for ( int8_t n=4; n<=5; n++){ 
-    
-    bq[n].freq = f ;
-    bq[n].gain = g ;
-    bq[n].q    = q ; 
-
-    switch (bq[n].filtertype) {
-      case LOWSHELF:
-
-        dsps_biquad_gen_lowShelf_f32( bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q );
-        break;
-        
-      default : break;
-
-    }
-  }
-}
-
-void dsp_set_gain_hshelf(uint8_t gain) {
-  float g = gain/4;
-  ESP_LOGI("H-Shelf","Gain %.2f",g);
-
-    for ( int8_t n=4; n<=5; n++){ 
-      bq[n].gain = g;
-      switch (bq[n].filtertype) {
-
-        case HIGHSHELF:
-          dsps_biquad_gen_highShelf_f32( bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q );
-          break;
-        default : break;
-
-      }
-    }
-}
-
-void dsp_set_hshelfFreq(uint8_t freqh, uint8_t freql) {
-
-  float freq = (freqh*256 + freql)/4;
-  ESP_LOGI("H-Shelf","Freq %.2f",freq);
-
-    for ( int8_t n=4; n<=5; n++){ 
-      bq[n].freq = freq;
-      switch (bq[n].filtertype) {
-
-        case HIGHSHELF:
-          dsps_biquad_gen_highShelf_f32( bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q );
-          break;
-        default : break;
-
-      }
-    }
-
-}
-
-void dsp_setup_hshelf(double freq, double gain, double q_filter){
-
-  float f = freq/44100;                   // Filter frequency 'normalized to sample rate'
-  float g = gain/4; 
-  float q = q_filter/64;
-
-  bq[4] = (ptype_t) { HIGHSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ; // Register Filter Biquads
-  bq[5] = (ptype_t) { HIGHSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
-
-  for(int8_t n=4; n<=5; n++){                   // Generate biquad coefficients
-                                                // only needed for bq[4] and bq[5]
-    bq[n].freq = f;
-    bq[n].gain = g;
-    bq[n].q = q;
-
-    switch (bq[n].filtertype) {                 
-      case HIGHSHELF:
-
-        dsps_biquad_gen_highShelf_f32(bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q);
-        break;
-
-      default : break;
-    }
-    
-    for (uint8_t i = 0;i <=3 ;i++ ){  
-
-      printf("%.4f",bq[n].coeffs[i]);
-    }
-   
-    // ^Prints the calculated coefficients for each filter. 
-    // Careful with changing the freq and gain too much. It'll clutter the bluetooth connection.      
-
   }
 }
 
@@ -625,4 +508,30 @@ void dsp_setup_filter(double freq, double gain, double q_filter, uint8_t filterT
       
       default : break;
   } 
+}
+
+void dsp_init_filter(uint8_t filterType, double freq){
+    
+    // FilterType: 
+    //    0: L-Shelf
+    //    1: H-Shelf
+    //    2: Peaking
+    //    3: Notch
+    //    .....
+
+    switch(filterType){
+        case 0:
+              dsp_setup_filter(freq, 0, 0.707, 0); // Initialize a l-shelf filter with 0 gain, frequency = param freq,  & q = 0.707
+              break;
+        case 1:
+              dsp_setup_filter(freq, 0, 0.707, 1); // Initialize a h-shelf filter with 0 gain, frequency = param freq,  & q = 0.707
+              break;              
+        case 2:
+              dsp_setup_filter(freq, 0, 0.707, 2); // Initialize a peaking filter with 0 gain, frequency = param freq,  & q = 0.707
+              break;              
+        case 3:
+              dsp_setup_filter(freq, 0, 0.707, 3); // Initialize a notch filter with 0 gain, frequency = param freq,  & q = 0.707
+              break;              
+        default : break;
+    }
 }

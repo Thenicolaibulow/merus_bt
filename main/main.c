@@ -61,12 +61,15 @@ void app_main(void)
     // Specific to MOUSAI Board. 
 
     dsp_i2s_task_init(samplerate);
-    dspFlow = dspfStereo;                   //dspfBiamp | dspfdynaBass; Stereo & BiAmp is pretty stable, dynBass; not so much..
+    dspFlow = dspfStereo;                           // ^ Set default dspflow to stereo. Can be changed on the fly in the app. 
     
-                                            // ^ Set default dspflow to stereo.
-    dsp_setup_flow(200.0);                  // Init crossover filters for biAmp dspflow.
-    dsp_setup_hshelf(150.0, 0, 0.707);      // Init highshelf filter.
-    dsp_setup_dynbass(150.0, 0, 0.707);     // Init lowshelf filter.
+                                            
+          //dsp_setup_flow(200.0);                  // Init crossover filters for biAmp dspflow.
+          //dsp_setup_hshelf(150.0, 0, 0.707);      // Init highshelf filter.
+          //dsp_setup_dynbass(150.0, 0, 0.707);     // Init lowshelf filter.
+
+    dsp_init_filter(0, 150);  // Inits a l-shelf @ 150Hz, gain = 0.
+    dsp_init_filter(1, 3000); // Inits a h-shelf @ 3KHz, gain = 0.
 
     // Gain set to 0, such that the system doesn't spin out off control straigth away. Adjust it in the APP (Be warned, Ear Rape!!) 
     // Lack of headroom in the main mix, when adjusted, is the current hypotesis to this behavior.
