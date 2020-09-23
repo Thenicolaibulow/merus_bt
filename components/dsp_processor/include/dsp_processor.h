@@ -39,5 +39,7 @@ void dsp_set_dynbass(uint8_t, uint8_t, uint8_t, uint8_t);
 void dsp_set_dynbassFreq(uint8_t, uint8_t);
 void dsp_set_hshelfFreq(uint8_t, uint8_t);
 void dsp_setup_hshelf(double freq,double gain, double q_filter);
-
+void dsp_set_filter_gain(double gain, uint8_t filterType);
+void dsp_setup_filter(double freq, double gain, double q_filter, uint8_t filterType);
+void dsp_set_filter_freq(double freq, uint8_t filterType);
 #endif /* _DSP_PROCESSOR_H_  */

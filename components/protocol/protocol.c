@@ -178,6 +178,12 @@ void protocolHandlerTask(void *pvParameter)
                break;
       case 7 : // DSP
                  switch (*(msg+2)) {
+                        
+                         /*     Rather than having seperate dsp functions for each filter, we should instead
+                                have a single function for frequency, and one for gain. - This function should also
+                                have a parameter, which indicates what type of filter we're changing, such that we can
+                                generalize the set_gain & set_freq functions in dsp_processor.c.
+                        */
 
                    case 0: // DSP Flow 
                            dspFlow = (int) *(msg+3);
@@ -214,13 +220,13 @@ void protocolHandlerTask(void *pvParameter)
                    case 6: 
                            printf("H-shelf frequency changed.");
                            dsp_set_hshelfFreq(*(msg+3),*(msg+4));
-                           // H-shelf freq. func here.
+                           
                            break; 
 
                    case 7: 
                            printf("H-shelf gain changed.");
                            dsp_set_gain_hshelf(*(msg+3));
-                           // H-shelf gain. func here.
+                           
                            break;                            
 
                    case 10:

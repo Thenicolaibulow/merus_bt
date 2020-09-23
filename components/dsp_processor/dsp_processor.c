@@ -228,19 +228,23 @@ void dsp_setup_dynbass(double freq, double gain, double quality){
   
   float dbf = freq/samplerate; 
   printf("Nomalized frequency : %d %f %.9f \n",samplerate, freq, dbf) ;
-  bq[4] = (ptype_t) { LOWSHELF, dbf, gain, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
+
+  bq[4] = (ptype_t) { LOWSHELF, dbf, gain, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ; // Register biquads.
   bq[5] = (ptype_t) { LOWSHELF, dbf, gain, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
-  dsps_biquad_gen_lowShelf_f32(bq[4].coeffs, bq[4].freq, bq[4].gain ,bq[4].q);
+
+  dsps_biquad_gen_lowShelf_f32(bq[4].coeffs, bq[4].freq, bq[4].gain ,bq[4].q);        // Generate coefficients.
   dsps_biquad_gen_lowShelf_f32(bq[5].coeffs, bq[5].freq, bq[5].gain ,bq[5].q);
-  for (uint8_t i = 0;i <=4 ;i++ ){  
+
+  for (uint8_t i = 0;i <=4 ;i++ ){          // Print coefficients.
       printf("%.6f ",bq[4].coeffs[i]);
     }
   printf("\n");
 }
 
-void dsp_setup_flow(double freq) {
+void dsp_setup_flow(double freq) { // Should really be called "Setup x-filter.."
 
   float f = freq/samplerate;
+
   bq[0] = (ptype_t) { LPF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
   bq[1] = (ptype_t) { LPF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
   bq[2] = (ptype_t) { HPF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
@@ -414,4 +418,211 @@ void dsp_setup_hshelf(double freq, double gain, double q_filter){
     // Careful with changing the freq and gain too much. It'll clutter the bluetooth connection.      
 
   }
+}
+
+void dsp_set_filter_freq(double freq, uint8_t filterType){
+
+    // FilterType: 
+    //    0: L-Shelf
+    //    1: H-Shelf
+    //    2: Peaking
+    //    3: Notch
+    //    .....
+
+  int8_t nrOfbq = 7;        // How many biquads are registered in the pipeline?.. upto 7 currently.
+  float f = freq/44100;     // Filter frequency normalized to samplerate.              
+
+  switch(filterType){
+      case 0:                                   
+
+            for(int8_t n = 0; n <= nrOfbq; n++){
+                  switch(bq[n].filtertype){
+
+                      case LOWSHELF:
+                          bq[n].freq = f;
+                          dsps_biquad_gen_lowShelf_f32(bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q);
+                          break; 
+                      default : break;
+                  }
+            }
+            break;
+      
+      case 1:
+
+            for(int8_t n = 0; n <= nrOfbq; n++){
+                  switch(bq[n].filtertype){
+
+                      case HIGHSHELF:
+                          bq[n].freq = f;
+                          dsps_biquad_gen_highShelf_f32(bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q);
+                          break; 
+                      default : break;
+                  }
+            }
+            break;
+            
+      case 2:
+
+            for(int8_t n = 0; n <= nrOfbq; n++){
+                  switch(bq[n].filtertype){
+
+                      case PEAKINGEQ:
+                          bq[n].freq = f;
+                          dsps_biquad_gen_peakingEQ_f32(bq[n].coeffs, bq[n].freq, bq[n].q);
+                          break; 
+                      default : break;
+                  }
+            }
+            break;
+      
+      case 3:
+
+            for(int8_t n = 0; n <= nrOfbq; n++){
+                  switch(bq[n].filtertype){
+
+                      case NOTCH:
+                          bq[n].freq = f;
+                          dsps_biquad_gen_notch_f32(bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q);
+                          break; 
+                      default : break;
+                  }
+            }
+            break;
+      
+      default : break;
+  }   
+}
+
+void dsp_set_filter_gain(double gain, uint8_t filterType){
+
+    // FilterType: 
+    //    0: L-Shelf
+    //    1: H-Shelf
+    //    2: Peaking
+    //    3: Notch
+    //    .....
+
+  float g = gain/4;                   // Create float gain.
+
+  switch(filterType){
+      case 0:                                   
+
+            for(int8_t n = 0; n <= 5; n++){
+
+                  switch(bq[n].filtertype){
+
+                      case LOWSHELF:
+                          bq[n].gain = g;
+                          dsps_biquad_gen_lowShelf_f32(bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q);
+                          break; 
+                      default : break;
+                  }
+            }
+            break;
+      
+      case 1:
+
+            for(int8_t n = 0; n <= 5; n++){
+
+                  switch(bq[n].filtertype){
+
+                      case HIGHSHELF:
+                          bq[n].gain = g;
+                          dsps_biquad_gen_highShelf_f32(bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q);
+                          break; 
+                      default : break;
+                  }
+            }          
+            break;
+      
+      case 2:
+            
+            for(int8_t n = 0; n <= 5; n++){
+
+                  switch(bq[n].filtertype){
+
+                      case PEAKINGEQ:
+                          bq[n].gain = g; // So.. apparently no gain adjustment for peaking filter? 
+                          dsps_biquad_gen_peakingEQ_f32(bq[n].coeffs, bq[n].freq, bq[n].q);
+                          break; 
+                      default : break;
+                  }
+            }          
+            break;  
+      
+      case 3:
+            
+            for(int8_t n = 0; n <= 5; n++){
+
+                  switch(bq[n].filtertype){
+
+                      case NOTCH:
+                          bq[n].gain = g;
+                          dsps_biquad_gen_notch_f32(bq[n].coeffs, bq[n].freq, bq[n].gain, bq[n].q);
+                          break; 
+                      default : break;
+                  }
+            }          
+            break;              
+      
+      default : break;
+  }   
+}
+
+void dsp_setup_filter(double freq, double gain, double q_filter, uint8_t filterType){
+
+    // FilterType: 
+    //    0: L-Shelf
+    //    1: H-Shelf
+    //    2: Peaking
+    //    3: Notch
+    //    .....
+
+  float f = freq/44100;                   // Filter frequency 'normalized to sample rate'
+  float g = gain/4; 
+  float q = q_filter/64;
+
+    switch(filterType){
+      case 0:
+
+            bq[0] = (ptype_t) { LOWSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;  // Register Filter Biquads
+            bq[1] = (ptype_t) { LOWSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
+
+            dsps_biquad_gen_lowShelf_f32(bq[0].coeffs, bq[0].freq, bq[0].gain, bq[0].q);    // Generate biquad coefficients.
+            dsps_biquad_gen_lowShelf_f32(bq[1].coeffs, bq[1].freq, bq[1].gain, bq[1].q);
+
+            break;
+      
+      case 1:
+
+            bq[2] = (ptype_t) { HIGHSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ; // Register Filter Biquads
+            bq[3] = (ptype_t) { HIGHSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;      
+            
+            dsps_biquad_gen_highShelf_f32(bq[2].coeffs, bq[2].freq, bq[2].gain, bq[2].q);    // Generate biquad coefficients.
+            dsps_biquad_gen_highShelf_f32(bq[3].coeffs, bq[3].freq, bq[3].gain, bq[3].q);
+
+            break;
+      
+      case 2:
+
+            bq[4] = (ptype_t) { PEAKINGEQ, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ; // Register Filter Biquads
+            bq[5] = (ptype_t) { PEAKINGEQ, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;      
+            
+            dsps_biquad_gen_peakingEQ_f32(bq[4].coeffs, bq[4].freq, bq[4].q);    // Generate biquad coefficients.
+            dsps_biquad_gen_peakingEQ_f32(bq[5].coeffs, bq[5].freq, bq[5].q);     
+
+            break;  
+      
+      case 3:
+
+            bq[6] = (ptype_t) { NOTCH, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ; // Register Filter Biquads
+            bq[7] = (ptype_t) { NOTCH, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;      
+            
+            dsps_biquad_gen_notch_f32(bq[6].coeffs, bq[6].freq, bq[6].gain, bq[6].q);    // Generate biquad coefficients.
+            dsps_biquad_gen_notch_f32(bq[7].coeffs, bq[7].freq, bq[7].gain, bq[7].q);    
+
+            break;              
+      
+      default : break;
+  } 
 }
