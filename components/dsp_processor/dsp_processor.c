@@ -394,8 +394,8 @@ void dsp_setup_hshelf(double freq, double gain, double q_filter){
   bq[4] = (ptype_t) { HIGHSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ; // Register Filter Biquads
   bq[5] = (ptype_t) { HIGHSHELF, f, 0, 0.707, NULL, NULL, {0,0,0,0,0}, {0, 0} } ;
 
-  for(int8_t n=0; n<=5; n++){                   // Generate biquad coefficients
-
+  for(int8_t n=4; n<=5; n++){                   // Generate biquad coefficients
+                                                // only needed for bq[4] and bq[5]
     bq[n].freq = f;
     bq[n].gain = g;
     bq[n].q = q;
