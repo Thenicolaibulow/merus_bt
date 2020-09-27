@@ -68,8 +68,8 @@ void app_main(void)
           //dsp_setup_hshelf(150.0, 0, 0.707);      // Init highshelf filter.
           //dsp_setup_dynbass(150.0, 0, 0.707);     // Init lowshelf filter.
 
-    dsp_init_filter(0, 120);  // Inits a l-shelf @ 150Hz, gain = 0.
-    dsp_init_filter(1, 2000); // Inits a h-shelf @ 3KHz, gain = 0.
+    dsp_init_filter(0, 120);  // Inits a l-shelf @ 120Hz, gain = 0.
+    dsp_init_filter(1, 2000); // Inits a h-shelf @ 2KHz, gain = 0.
 
     // Gain set to 0, such that the system doesn't spin out off control straigth away. Adjust it in the APP (Be warned, Ear Rape!!) 
     // Lack of headroom in the main mix, when adjusted, is the current hypotesis to this behavior.
