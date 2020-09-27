@@ -385,7 +385,7 @@ void dsp_set_filter_gain(double gain, uint8_t filterType){
     //    3: Notch
     //    .....
 
-  float g = gain/4;                   // Create float gain.
+  float g = gain/2;                   // Create float gain.
 
   switch(filterType){
       case 0:                                   

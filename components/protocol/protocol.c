@@ -206,7 +206,8 @@ void protocolHandlerTask(void *pvParameter)
                            break;
 
                    case 3: // Change filter gain
-                           dsp_set_filter_gain(*(msg+3), *(msg+4)); // gain, filtertype. SPP package should then be: 7, 3, gain, 0-3 (filtertype)
+                           dsp_set_filter_gain((*(msg+3)-12), *(msg+4)); // gain, filtertype. SPP package should then be: 7, 3, gain, 0-3 (filtertype)
+                           // Testing to see if we can have negative gain. - Wilst we cannot send a negative value from the app, we'll of set it with 1/2 = 12. 
                                 switch(*(msg+4)){
                                         case 0: 
                                                 printf("L-shelf gain changed.");
