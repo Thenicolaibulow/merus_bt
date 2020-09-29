@@ -22,7 +22,7 @@ uint32_t freqBT = 1000;
 uint32_t dynbassFreq = 400;  
 uint8_t gain = 0;   // gain db /4 
 uint8_t muteCH[4] = {0};
-ptype_t bq[6];
+ptype_t bq[7]; // Should be increased.
 
 void setup_dsp_i2s(uint32_t sample_rate)
 {
@@ -63,16 +63,11 @@ static void dsp_i2s_task_handler(void *arg)
   float sbuffer0[1024];
   float sbuffer1[1024];
   float sbuffer2[1024];
-  float sbuffer3[1024];
-  float sbuffer4[1024];
-  // float sbuffer5[1024]; Seems to be causeing memory overflow!
-  // float sbuffer6[1024];
-  // float sbuffer7[1024];
-  // float sbuffer8[1024];
   float sbufout0[1024];
   float sbufout1[1024];
   float sbufout2[1024];
   float sbuftmp0[1024];
+  float sbuftmp1[1024];
 
   float chmax[2] = {0}; 
   float chmaxpost[2] = {0}; 
@@ -107,8 +102,6 @@ static void dsp_i2s_task_handler(void *arg)
           { sbuffer0[i] = prescale0 * sbuffer0[i];              // I assume that this causes a lower overall volume, thus adding headspace for filters.
             sbuffer1[i] = prescale1 * sbuffer1[i];
             sbuffer2[i] = prescale1 * sbuffer2[i];
-            sbuffer3[i] = prescale1 * sbuffer3[i];
-            sbuffer4[i] = prescale1 * sbuffer4[i];
           } 
 
           sbuffer2[i] = ((sbuffer0[i]/2) +  (sbuffer1[i]/2));
@@ -135,15 +128,14 @@ static void dsp_i2s_task_handler(void *arg)
                 // Create filter pipeline.
                 // Sbuffer2 isn't used, as it's reserved for biamp operation, which is downmixed to mono. : sbuffer2[i] = ((sbuffer0[i]/2) +  (sbuffer1[i]/2));
 
-                dsps_biquad_f32_ae32(sbuffer0, sbuffer3, len, bq[0].coeffs, bq[0].w); 
-                dsps_biquad_f32_ae32(sbuffer1, sbuffer4, len, bq[1].coeffs, bq[1].w); 
-                dsps_biquad_f32_ae32(sbuffer3, sbufout0, len, bq[2].coeffs, bq[2].w);   
-                dsps_biquad_f32_ae32(sbuffer4, sbufout1, len, bq[3].coeffs, bq[3].w);                 
-
-                // dsps_biquad_f32_ae32(sbuffer5, sbuffer7, len, bq[4].coeffs, bq[4].w);  // Causes memory overflow. It seems we need to be able to reuse the sbuffer's
-                // dsps_biquad_f32_ae32(sbuffer6, sbuffer8, len, bq[5].coeffs, bq[5].w);  throughout the biquad pipes..
-                // dsps_biquad_f32_ae32(sbuffer7, sbufout0, len, bq[6].coeffs, bq[6].w); 
-                // dsps_biquad_f32_ae32(sbuffer8, sbufout1, len, bq[7].coeffs, bq[7].w); 
+                dsps_biquad_f32_ae32(sbuffer0, sbuftmp0, len, bq[0].coeffs, bq[0].w); 
+                dsps_biquad_f32_ae32(sbuffer1, sbuftmp1, len, bq[1].coeffs, bq[1].w); 
+                dsps_biquad_f32_ae32(sbuftmp0, sbuffer0, len, bq[2].coeffs, bq[2].w);   
+                dsps_biquad_f32_ae32(sbuftmp1, sbuffer1, len, bq[3].coeffs, bq[3].w);                 
+                dsps_biquad_f32_ae32(sbuffer0, sbuftmp0, len, bq[4].coeffs, bq[4].w);  // Attempting to reuse buffers
+                dsps_biquad_f32_ae32(sbuffer1, sbuftmp1, len, bq[5].coeffs, bq[5].w);  // throughout the biquad pipes..
+                dsps_biquad_f32_ae32(sbuftmp0, sbufout0, len, bq[6].coeffs, bq[6].w); 
+                dsps_biquad_f32_ae32(sbuftmp1, sbufout1, len, bq[7].coeffs, bq[7].w); 
 
                 // Pipeline: L-shelf [bq[0-1]] -> H-shelf [bq[2-3]] -> Peaking [bq[4-5]] -> Notch [bq[6-7]]
                 // Even though some biquads might not have any effect (gain), this pipeline should allow us to test each biquad.
@@ -315,7 +307,7 @@ void dsp_set_filter_freq(double freq, uint8_t filterType){
   int8_t nrOfbq = 7;        // How many biquads are registered in the pipeline?.. upto 7 currently.
   float f = freq/44100;     // Filter frequency normalized to samplerate.              
 
-  switch(filterType){
+  switch(filterType){       // This switch statement is pretty inefficient. Will optimize..
       case 0:                                   
 
             for(int8_t n = 0; n <= nrOfbq; n++){
