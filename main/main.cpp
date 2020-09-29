@@ -37,10 +37,6 @@ extern "C" {
 #include "bt_app_core.h"
 #include "bt_app_av.h"
 #include "esp_spp_api.h"
-#include "esp32-hal.h"
-#include "nvs.h"
-#include "esp_bt_defs.h"
-
 
 static const char *TAG = "Main";
 xQueueHandle prot_queue;
@@ -102,7 +98,7 @@ while(1){
   }
 }
 
-extern "C" void app_main()
+extern "C" void app_main(void)
 {   esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
       ESP_ERROR_CHECK(nvs_flash_erase());

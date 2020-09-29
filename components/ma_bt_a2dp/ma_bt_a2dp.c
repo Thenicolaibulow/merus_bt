@@ -303,7 +303,7 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
             ESP_LOGI(SPP_TAG, "ESP_SPP_CONG_EVT");
             break;
     case ESP_SPP_WRITE_EVT:
-            //ESP_LOGI(SPP_TAG, "ESP_SPP_WRITE_EVT");
+            ESP_LOGI(SPP_TAG, "ESP_SPP_WRITE_EVT");
             break;
     case ESP_SPP_SRV_OPEN_EVT:
             spp_handle = param->open.handle;
@@ -321,7 +321,7 @@ static void bt_av_hdl_stack_evt(uint16_t event, void *p_param)
     switch (event){
         case BT_APP_EVT_STACK_UP:{
             /* set up device name */
-            char *dev_name = "MOUSAI @ Marius V2";
+            char *dev_name = "MOUSAI @ PILOU";
             esp_bt_dev_set_device_name(dev_name);
 
             esp_bt_gap_register_callback(bt_app_gap_cb);
