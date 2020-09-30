@@ -86,13 +86,13 @@ CRGB leds[NUM_LEDS];
 static void LEDRing(void *param){
 
 while(1){
+
     for( int i = 0; i < NUM_LEDS; i++) {
         
-        leds[i] = CRGB::Chartreuse;
+        leds[i] = CRGB::Violet;
         
         if((i - 1) > 0){
           leds[i-1] = CRGB::Black;
-          leds[i+1] = CRGB::DarkGoldenrod;
         }
 
         FastLED.show();
@@ -114,7 +114,7 @@ extern "C" void app_main()
     FastLED.addLeds<LED_TYPE, DATA_PIN_1>(leds, NUM_LEDS);
 
     printf("Create task for led ring\n");
-    xTaskCreatePinnedToCore(LEDRing, "LedRing", 4000, NULL, 5, NULL, 1);  
+    xTaskCreatePinnedToCore(LEDRing, "LedRing", 4000, NULL, 4, NULL, 1);  // Changed core and priority
 
 
 
